@@ -12,12 +12,12 @@ region:
   name: Southern Rockies (BC / AB)
 
 data:
-  gfc_asset: UMD/hansen/global_forest_change_2023_v1_11   # bump when a newer release is verified
-  gfc_last_year: 2023
+  gfc_asset: UMD/hansen/global_forest_change_2025_v1_13
+  gfc_last_year: 2025
   treecover_min: 30            # % canopy in 2000 that counts as forest
   scale: 30                    # metres, sampling resolution
   season: ["06-15", "09-15"]   # growing-season composite window (MM-DD)
-  feature_years: [2003, 2023]  # T range for which features are exported (inclusive)
+  feature_years: [2003, 2025]  # T range for which features are exported (inclusive)
   # Training points: stratified on "ever lost" so each year has enough positives.
   n_points_ever_loss: 30000
   n_points_never_loss: 30000
@@ -36,7 +36,7 @@ model:
   # so no label window overlaps the next split. Test years are clipped so that T + h <= gfc_last_year.
   train_years: [2003, 2014]
   val_years: [2015, 2016]
-  test_years: [2019, 2022]
+  test_years: [2019, 2024]
   block_deg: [0.2, 0.15]       # spatial block size (lon, lat) ≈ 15 km
   test_block_frac: 0.2         # share of blocks held out entirely for testing
   optuna_trials: 30

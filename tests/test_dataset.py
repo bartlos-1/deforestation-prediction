@@ -51,7 +51,8 @@ def test_stratum_weights_recover_population_share():
 
 def test_splits_respect_embargo_and_blocks():
     cfg = load_config()
-    years = np.arange(2003, 2023)
+    last = cfg["data"]["gfc_last_year"]
+    years = np.arange(2003, last)
     panel = pd.DataFrame({
         "year": np.tile(years, 2), "eligible": True, "y3": 0.0, "w": 1.0,
         "test_block": np.repeat([False, True], len(years)), "block_id": np.repeat([1, 2], len(years)),
@@ -63,7 +64,7 @@ def test_splits_respect_embargo_and_blocks():
     assert (s["val"]["year"] + 3 <= te0).all()
     assert not s["train"]["test_block"].any() and s["test"]["test_block"].all()
     assert (s["test"]["year"] + 3 <= cfg["data"]["gfc_last_year"]).all()
-    p = prod_splits(panel.assign(y3=np.where(panel["year"] + 3 <= 2023, 0.0, np.nan)), cfg, 3)
+    p = prod_splits(panel.assign(y3=np.where(panel["year"] + 3 <= last, 0.0, np.nan)), cfg, 3)
     assert p["train"]["year"].max() + 3 <= p["cal"]["year"].min()
 
 
