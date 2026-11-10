@@ -1,0 +1,50 @@
+# Single source of truth for the pipeline. Paths are relative to the repo root.
+
+project:
+  ee_project: deforestation-450200
+  drive_folder: deforest_v2          # Google Drive folder that Earth Engine exports into
+  asset_root: projects/deforestation-450200/assets/deforest_v2
+
+region:
+  # lon_min, lat_min, lon_max, lat_max — current box (mostly SE British Columbia + W Alberta).
+  # For Alberta proper use roughly [-120.0, 49.0, -110.0, 54.5].
+  bbox: [-122.8, 48.9, -113.5, 54.5]
+  name: Southern Rockies (BC / AB)
+
+data:
+  gfc_asset: UMD/hansen/global_forest_change_2023_v1_11   # bump when a newer release is verified
+  gfc_last_year: 2023
+  treecover_min: 30            # % canopy in 2000 that counts as forest
+  scale: 30                    # metres, sampling resolution
+  season: ["06-15", "09-15"]   # growing-season composite window (MM-DD)
+  feature_years: [2003, 2023]  # T range for which features are exported (inclusive)
+  # Training points: stratified on "ever lost" so each year has enough positives.
+  n_points_ever_loss: 30000
+  n_points_never_loss: 30000
+  seed: 42
+  # Prediction grid spacing (metres) for the wall-to-wall risk map.
+  grid_spacing: 1000
+  # Optional assets — checked by `python -m deforest.export verify`; features are skipped if missing.
+  optional_assets:
+    roads: projects/sat-io/open-datasets/GRIP4/North-America
+    protected: WCMC/WDPA/current/polygons
+    built: JRC/GHSL/P2023A/GHS_BUILT_S
+
+model:
+  horizons: [1, 2, 3]          # predict loss within (T, T+h]
+  # T ranges (inclusive). Embargo: train rows need T + h <= val start, val rows need T + h <= test start,
+  # so no label window overlaps the next split. Test years are clipped so that T + h <= gfc_last_year.
+  train_years: [2003, 2014]
+  val_years: [2015, 2016]
+  test_years: [2019, 2022]
+  block_deg: [0.2, 0.15]       # spatial block size (lon, lat) ≈ 15 km
+  test_block_frac: 0.2         # share of blocks held out entirely for testing
+  optuna_trials: 30
+  top_k: [0.01, 0.05, 0.10]    # share of forest area for precision/recall@k
+
+paths:
+  raw: data/raw                # put the CSVs downloaded from Drive here
+  processed: data/processed
+  models: models
+  reports: reports
+  web_data: web/data

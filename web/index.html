@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forest Loss Atlas</title>
+  <meta name="description" content="Tree-cover loss history and calibrated near-term loss risk for the southern Rockies (British Columbia / Alberta)." />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="brand-mark"><path d="M12 2 5 12h4l-4 6h6v4h2v-4h6l-4-6h4z" fill="currentColor"/></svg>
+      <div>
+        <h1>Forest Loss Atlas</h1>
+        <p class="sub" id="region-sub">Loading…</p>
+      </div>
+    </div>
+    <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle colour theme" title="Toggle theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <main class="layout">
+    <aside class="panel" aria-label="Controls and insights">
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="history" aria-selected="true">History</button>
+        <button role="tab" data-tab="risk" aria-selected="false">Risk</button>
+        <button role="tab" data-tab="models" aria-selected="false">Models</button>
+        <button role="tab" data-tab="about" aria-selected="false">About</button>
+      </nav>
+
+      <!-- HISTORY -->
+      <section class="tab-panel" data-panel="history">
+        <p class="lede">Observed tree-cover loss (Hansen Global Forest Change). Draw an area on the map to see its annual trend.</p>
+        <div class="control-row">
+          <label class="field">From <select id="year-from"></select></label>
+          <label class="field">To <select id="year-to"></select></label>
+        </div>
+        <div class="legend" id="history-legend"></div>
+        <div class="tiles" id="history-tiles"></div>
+        <figure class="chart-card">
+          <figcaption>
+            <span class="chart-title" id="history-chart-title">Annual loss — whole region</span>
+            <button class="link-btn" type="button" data-table-toggle="history-table">Show table</button>
+          </figcaption>
+          <div class="chart" id="history-chart"></div>
+          <div class="table-wrap" id="history-table" hidden></div>
+        </figure>
+      </section>
+
+      <!-- RISK -->
+      <section class="tab-panel" data-panel="risk" hidden>
+        <p class="lede">Calibrated probability that forest still standing at the end of <span data-base-year></span> loses tree cover within the selected period. The cell colour is the mean over ~1&nbsp;km grid points.</p>
+        <div class="control-row">
+          <div class="seg" id="risk-horizons" role="radiogroup" aria-label="Prediction period"></div>
+        </div>
+        <div class="legend" id="risk-legend"></div>
+        <div class="tiles" id="risk-tiles"></div>
+        <div class="callout info" role="note" id="risk-note"></div>
+      </section>
+
+      <!-- MODELS -->
+      <section class="tab-panel" data-panel="models" hidden>
+        <p class="lede" id="models-lede"></p>
+        <div class="control-row">
+          <div class="seg" id="model-horizons" role="radiogroup" aria-label="Horizon"></div>
+        </div>
+        <div id="model-body"></div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="tab-panel prose" data-panel="about" hidden>
+        <h2>What this is</h2>
+        <p>An atlas of observed tree-cover loss and a model of where loss is likely in the next 1–3 years. It began as a DATA 501 capstone at the University of Calgary by Arij Ashar and Yurii Bezborodov, and was rebuilt in 2026.</p>
+        <h2>How the model works</h2>
+        <ul>
+          <li><strong>Target:</strong> for every pixel that is still forest at the end of year T, does Hansen record loss in T+1…T+h?</li>
+          <li><strong>Features (all known by the end of T):</strong> Landsat growing-season reflectance and 1- and 3-year changes, terrain, canopy cover, distance to and density of recent loss, recent wildfire (MODIS), and roads, protected areas and settlements where available.</li>
+          <li><strong>Validation:</strong> trained on earlier years and tested on later years, in ~15 km blocks the model never saw. The scores are weighted back to the full forest area.</li>
+        </ul>
+        <h2>Read the map with care</h2>
+        <ul>
+          <li><strong>Loss is not the same as deforestation.</strong> Hansen loss includes wildfire and harvest followed by regrowth. In this region most of it is not a permanent change in land use.</li>
+          <li><strong>Wildfire is hard to predict.</strong> Its timing depends on weather the model doesn’t see. The Models tab reports fire and other loss separately.</li>
+          <li><strong>Cells are aggregates.</strong> Each square is a 0.04° cell (~3–4 km).</li>
+        </ul>
+        <h2>Data</h2>
+        <ul>
+          <li>Hansen et al., Global Forest Change (University of Maryland) · USGS Landsat Collection 2 · MODIS MCD64A1 burned area · SRTM.</li>
+          <li>Basemap © OpenStreetMap contributors, © CARTO.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <section class="map-wrap" aria-label="Map">
+      <div id="map"></div>
+      <div class="map-tools">
+        <button id="draw-btn" class="btn primary" type="button">Draw area</button>
+        <button id="clear-btn" class="btn" type="button" hidden>Clear area</button>
+      </div>
+      <p id="draw-hint" class="map-hint" hidden>Click to add points · click the first point or double-click to finish · Esc to cancel</p>
+      <div id="map-tip" class="tooltip" hidden></div>
+      <div id="map-status" class="map-status">Loading data…</div>
+    </section>
+  </main>
+
+  <div id="chart-tip" class="tooltip" hidden></div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

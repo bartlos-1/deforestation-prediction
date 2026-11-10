@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/
+# data and artefacts live outside git
+data/raw/
+data/processed/
+data/synthetic/
+models/
+reports/
