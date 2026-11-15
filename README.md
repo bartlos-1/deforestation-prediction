@@ -2,6 +2,8 @@
 
 Near-term tree-cover loss risk for the southern Rockies (BC / AB): Earth Engine features, XGBoost models with honest spatial and temporal validation, and a static web dashboard.
 
+**Live dashboard:** https://bartlos-1.github.io/deforestation-prediction/
+
 **Question the model answers:** for forest still standing at the end of year *T*, what is the probability that Hansen records tree-cover loss within the next 1, 2 or 3 years?
 
 See [`docs/PIPELINE_REVIEW.md`](docs/PIPELINE_REVIEW.md) for why the original notebook (`legacy/`) was replaced.
@@ -69,4 +71,4 @@ Metrics are weighted back to the true forest population, which undoes the 50/50 
 
 ## Dashboard
 
-`web/` is a static site: copy it to GitHub Pages, Netlify or any static host. It reads `web/data/{history,risk,metrics}.json`, so commit those after a real run.
+`web/` is a static site, deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main` that touches `web/`. It reads `web/data/{history,risk,metrics}.json`, so commit those after a real run.
