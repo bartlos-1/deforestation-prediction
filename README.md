@@ -41,6 +41,7 @@ source .venv/bin/activate
 python -m deforest.export verify            # checks assets, decides which optional features exist
 python -m deforest.export points            # training points → asset + Drive; wait until finished (~10–30 min)
 python -m deforest.export features          # 21 tasks, one per year 2003–2023
+python -m deforest.export features --years 2010 --parts 4   # rerun a year that timed out, as 4 smaller tasks
 python -m deforest.export grid              # 16 tiles of the 1 km prediction grid for 2023
 python -m deforest.export history           # 9 tiles of per-cell annual loss for the History tab
 python -m deforest.export status

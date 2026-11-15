@@ -79,6 +79,8 @@ def build_panel(cfg) -> pd.DataFrame:
     points = pd.read_csv(raw / "points.csv", dtype={"point_id": str})
     strata = pd.read_csv(raw / "strata.csv")
     feats = _read(raw.glob("features_*.csv"))
+    if not feats.empty:  # split re-exports may overlap a full-year file
+        feats = feats.drop_duplicates(["point_id", "year"])
     if feats.empty:
         raise SystemExit(f"No features_*.csv in {raw}")
 

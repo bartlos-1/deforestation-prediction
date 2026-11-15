@@ -2,7 +2,7 @@
 
     python -m deforest.export verify                 # check assets, record which optional features exist
     python -m deforest.export points                 # stratified training points → asset + Drive CSV, strata counts
-    python -m deforest.export features [--years 2003-2023]
+    python -m deforest.export features [--years 2003-2023] [--parts 4]
     python -m deforest.export grid [--year 2023]     # wall-to-wall prediction grid
     python -m deforest.export history                # per-cell annual loss counts for the dashboard
     python -m deforest.export status                 # list recent tasks
@@ -115,11 +115,21 @@ def cmd_features(cfg, args):
         raise SystemExit(f"{asset_id} not found — run `points` and wait for the asset task to finish.")
     fb = FeatureBuilder(cfg, load_available(cfg))
     pts = ee.FeatureCollection(asset_id)
+    # --parts N splits the points into N longitude strips (one task each) for years that time out.
+    x0, _, x1, _ = cfg.bbox
+    edges = [x0 + (x1 - x0) * k / args.parts for k in range(args.parts + 1)]
+    edges[0], edges[-1] = -181, 181
     for T in _parse_years(args.years, cfg):
-        fc = fb.image_for_year(T).sampleRegions(
-            collection=pts, properties=["point_id"], scale=cfg["data"]["scale"], tileScale=8
-        ).map(lambda f, T=T: f.set("year", T))
-        _drive(cfg, fc, f"features_{T}", ["point_id", "year"] + fb.band_names())
+        img = fb.image_for_year(T)
+        only = [int(x) for x in args.only.split(",")] if args.only else range(args.parts)
+        for k in only:
+            sub = pts if args.parts == 1 else pts.filter(
+                ee.Filter.And(ee.Filter.gte("lon", edges[k]), ee.Filter.lt("lon", edges[k + 1])))
+            fc = img.sampleRegions(
+                collection=sub, properties=["point_id"], scale=cfg["data"]["scale"], tileScale=16 if args.parts > 1 else 8
+            ).map(lambda f, T=T: f.set("year", T))
+            name = f"features_{T}" if args.parts == 1 else f"features_{T}_p{k}"
+            _drive(cfg, fc, name, ["point_id", "year"] + fb.band_names())
 
 
 def cmd_grid(cfg, args):
@@ -161,7 +171,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("verify")
     sub.add_parser("points")
-    p = sub.add_parser("features"); p.add_argument("--years", default="")
+    p = sub.add_parser("features"); p.add_argument("--years", default=""); p.add_argument("--parts", type=int, default=1); p.add_argument("--only", default="", help="comma-separated part indices to (re)run")
     p = sub.add_parser("grid"); p.add_argument("--year", type=int); p.add_argument("--nx", type=int, default=4); p.add_argument("--ny", type=int, default=4)
     p = sub.add_parser("history"); p.add_argument("--nx", type=int, default=3); p.add_argument("--ny", type=int, default=3)
     sub.add_parser("status")
