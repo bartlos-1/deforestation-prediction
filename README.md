@@ -6,7 +6,7 @@ Near-term tree-cover loss risk for the southern Rockies (BC / AB): Earth Engine 
 
 **Question the model answers:** for forest still standing at the end of year *T*, what is the probability that Hansen records tree-cover loss within the next 1, 2 or 3 years?
 
-See [`docs/PIPELINE_REVIEW.md`](docs/PIPELINE_REVIEW.md) for why the original notebook (`legacy/`) was replaced.
+See [`docs/PIPELINE_REVIEW.md`](docs/PIPELINE_REVIEW.md) for what was wrong with my first version (`legacy/`) and how I fixed it.
 
 ## Layout
 
@@ -64,7 +64,7 @@ cd web && python -m http.server 8000        # http://localhost:8000
 |---|---|---|---|
 | train | 2003–2014, with *T + h* ≤ 2015 | 80% | fitting and Optuna CV (GroupKFold on ~15 km blocks) |
 | val | 2015–2016, with *T + h* ≤ 2019 | 80% | probability calibration |
-| **test** | 2019–2022, with *T + h* ≤ 2023 | **20%, never seen** | every reported number |
+| **test** | 2019–2024, with *T + h* ≤ 2025 | **20%, never seen** | every reported number |
 | prod | everything | all | the map; trained up to *T* = last − h − 2, calibrated on the last two labelled years |
 
 Metrics are weighted back to the true forest population, which undoes the 50/50 "ever lost / never lost" sample. Baselines are reported alongside: the base rate, distance to recent loss, and a 4-feature logistic regression.
